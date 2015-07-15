@@ -148,11 +148,11 @@ void pb_set_log_file(FILE* file);
 		}\
 	}while(0)
 
-#define PB_FRETURN_VOID_IF_ASSERT(cond, val)\
+#define PB_FRETURN_VOID_IF_ASSERT(cond)\
         do{\
                 assert(!(cond)); \
                 if(cond){\
-                        PB_ERROR("Condition: \""#cond"\", return(\""#val"\")]");\
+                        PB_ERROR("Condition: \""#cond"\", return]");\
                         return ;\
                 }\
         }while(0)

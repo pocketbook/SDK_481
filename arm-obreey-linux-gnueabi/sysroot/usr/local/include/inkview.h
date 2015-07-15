@@ -250,7 +250,6 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_INIT 21
 #define EVT_EXIT 22
 #define EVT_SHOW 23
-#define EVT_REPAINT 23
 #define EVT_HIDE 24
 #define EVT_KEYDOWN 25
 #define EVT_KEYPRESS 25
@@ -265,6 +264,7 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_POINTERLONG 34
 #define EVT_POINTERHOLD 35
 #define EVT_POINTERDRAG 44 //like EVT_POINTERMOVE, but has non sensitive zone, which smooths finger touch bounce.
+#define EVT_POINTERCANCEL 45
 
 #define EVT_ORIENTATION 32
 #define EVT_FOCUS 36
@@ -275,6 +275,7 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_TOUCHUP   40
 #define EVT_TOUCHDOWN 41
 #define EVT_TOUCHMOVE 42
+#define EVT_REPAINT 43
 
 #define EVT_QN_MOVE    51
 #define EVT_QN_RELEASE 52
@@ -341,6 +342,8 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_STARTSCAN    215
 #define EVT_SCANSTOPPED  216
 #define EVT_POSTPONE_TIMED_POWEROFF  217
+#define EVT_FRAME_ACTIVATED 218
+#define EVT_FRAME_DEACTIVATED 219
 
 #define EVT_NET_CONNECTED	256
 #define EVT_NET_DISCONNECTED 257
@@ -1087,8 +1090,8 @@ typedef struct ipager_s {
     int page_width;
     int rigth_width;
     int separator_size;
-    ibitmap *icon_left;
-    ibitmap *icon_right;
+    const ibitmap *icon_left;
+    const ibitmap *icon_right;
     int current_page;
     int total_pages;
     irect position;
@@ -1202,6 +1205,7 @@ typedef struct bookinfo_s {
 	int drm;
 	char *annotation;
     char *lang;
+    char *publisher;
 
 } bookinfo;
 
@@ -1383,6 +1387,58 @@ typedef struct network_interface_array_s {
 }network_interface_array;
 
 /*
+ * Bluetooth services
+ */
+#define MAX_BT_SERVICE_USER 16
+
+enum bt_service_e {
+	BT_UNKNOWN = 0,
+	BT_AUTH,
+	BT_OBEX,
+	BT_SECOND_SCREEN
+};
+
+enum bt_service_state_e {
+	BT_SERVICE_ACTIVE = 0,
+	BT_SERVICE_CANCEL,
+	BT_SERVICE_ERROR
+};
+
+enum obex_status_e {
+	OBEX_UNKNOWN = 0,
+	OBEX_ERROR,
+	OBEX_REQUEST_AUTH,
+	OBEX_REQUEST_AUTH_DONE,
+	OBEX_TRANSFERRING,
+	OBEX_DONE
+};
+
+struct obex_service_s {
+	enum obex_status_e status;
+	int auth;
+
+	long filesize;
+	long transferred;
+
+	char name[128];
+	char path[256];
+	char description[128];
+	char mimetype[64];
+};
+
+typedef struct bt_service_obj_s {
+	int id;
+	enum bt_service_e service;
+	enum bt_service_state_e state;
+	int lock;
+	pid_t users[MAX_BT_SERVICE_USER];
+	union {
+		struct obex_service_s obex;
+		char service_data[1024];
+	};
+} bt_service_obj;
+
+/*
  * struct which consist main information about any network interface.
  */
 typedef struct {
@@ -1416,6 +1472,7 @@ void OpenScreen();
 void OpenScreenExt();
 void InkViewMain(iv_handler h);
 void CloseApp();
+void InitInkview(int reg_flags);
 
 // Return irect struct
 
@@ -1510,7 +1567,7 @@ void TransparentRect(irect rect, int percent);
 
 ibitmap *LoadBitmap(const char *filename);
 ibitmap *zLoadBitmap(void *zf, const char *filename);
-int SaveBitmap(const char *filename, ibitmap *bm);
+int SaveBitmap(const char *filename, const ibitmap *bm);
 ibitmap *BitmapFromScreen(int x, int y, int w, int h);
 ibitmap *BitmapFromScreenR(int x, int y, int w, int h, int rotate);
 ibitmap *NewBitmap(int w, int h);
@@ -1522,7 +1579,8 @@ ibitmap *LoadPNG(const char *path, int dither);
 ibitmap *LoadPNGStretch(const char *path, int width, int height, int proportional, int dither);
 int SavePNG(const char *path, const ibitmap *bmp);
 void SetTransparentColor(ibitmap **bmp, int color);
-ibitmap* CopyBitmapDepth4To8(ibitmap* bmp);
+ibitmap* CopyBitmapDepth4To8(const ibitmap* bmp);
+ibitmap* CopyBitmapDepth8To4(const ibitmap* bmp);
 void MoveBitmap(ibitmap* bmp, int offset);
 
 /**
@@ -1693,6 +1751,7 @@ int GetPanelType();
 void SetShowPanelReader(int show);
 int IsShowPanelReader();
 int  SetPanelSeparatorEnabled(int enable); // Calling procedure you enable horizontal separator, it separates bottom panel from other page contents
+int IsPanelSeparatorEnabled();
 
 /**
  * @brief StartPanelProgress start gui animation on panel
@@ -1915,18 +1974,50 @@ int IsBookRTL();	// can be overwritten by application
 //#define TF(x...) GetLangTextF(x)
 
 // User profile functions
+typedef struct iprofile_s {
+	char *name;
+	char *path;
+	int type;
+	ibitmap *avatar;
+} iprofile;
 
+typedef struct iprofiles_s {
+	iprofile *profile;
+	int count;
+} iprofiles;
+
+// Profiles functions
+
+// Old functions. Will be removed in future
 char **EnumProfiles();
 int GetProfileType(const char *name);
 ibitmap **EnumProfileAvatars();
 ibitmap *GetProfileAvatar(const char *name);
 int SetProfileAvatar(const char *name, ibitmap *ava);
-int CreateProfile(const char *name, int type);
 int RenameProfile(const char *oldname, const char *newname);
 int DeleteProfile(const char *name);
 char *GetCurrentProfile();
 void SetCurrentProfile(const char *name, int flags);
+int GetProfilesCountAfterEnum();
 void OpenProfileSelector();
+int ScanProfiles(const char *path, int type, iprofiles *profiles);
+int GetLocalProfilesLimit();
+int GetSDProfilesLimit();
+int GetProfilesLimit();
+
+// New function for work with profiles
+iprofile CreateProfileStruct();
+iprofiles CreateProfilesStruct();
+void ClearProfilesStruct(iprofiles *profiles);
+void ClearProfileStruct(iprofile *profile);
+int ScanProfiles(const char *path, int type, iprofiles *profiles);
+int GetProfilesList(iprofiles *profiles);
+int CreateProfile(const char *name, int type);
+int DeleteProfileEx(const iprofile *profile);
+int RenameProfileEx(const iprofile *profile, const char *new_name);
+int GetCurrentProfileEx(iprofile *profile);
+int SetCurrentProfileEx(const iprofile *profile);
+int GetProfilesCount();
 
 // Theme functions
 
@@ -2428,6 +2519,8 @@ ibitmap *CoverCacheGet(COVERCACHE_STORAGES storage, const char *file_path);
 int PostponeTimedPoweroff(void);
 
 char *arc_filename(const char *name);
+
+const char* get_partner_id(void);
 
 #ifdef __cplusplus
 }

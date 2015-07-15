@@ -131,6 +131,15 @@ extern "C"
 #define INKFLAG_3BIT_WAVEFORM  0x02
 #define INKFLAG_A2PLUS         0x04
 
+#define MCU_CAPS_NOTINITED  0x80000000
+#define MCU_CAPS_FRONTLIGHT (1 << 0)
+#define MCU_CAPS_SENSOR     (1 << 1)
+
+#define IOC_MCU_PATH "/sys/class/ioc-stm32/"
+#define IOC_MCU_SENSOR_PATH IOC_MCU_PATH "sensor"
+#define IOC_MCU_FPROFILE_PATH IOC_MCU_PATH "frontlight_profile"
+#define IOC_MCU_BRIGHTNESS_PATH IOC_MCU_PATH "brightness"
+
 typedef enum EPARTNER_ID {
     PARTNER_INVALID = -1,
     PARTNER_DEFAULT = 0,
@@ -499,7 +508,6 @@ typedef struct iv_mpctl_s {
     int uiquery;
     int uistatus;
     unsigned int uidata[MAXUIDATA];
-
 	int obreey_sync_status;
 	int messages_count; // Number of new messages to show on panel
 	int dialog_h[16];   // heights of dialog windows
@@ -533,6 +541,8 @@ typedef struct iv_mpctl_s {
 	pid_t control_panel_pid;
 	pid_t menca_pid;
     pid_t push_notification_pid;
+
+    int enable_timed_refresh;
 
 } iv_mpctl;
 
@@ -929,6 +939,8 @@ void hw_releasetaskfb(icanvas *fb);
 
 int hw_get_frontlight_state(void);
 void hw_set_frontlight_state(int flstate, int previous);
+unsigned int hw_get_mcu_capabilities(void);
+int hw_is_timed_refresh_enabled(void);
 
 void iv_extend_wtime(long long t);
 iv_handler iv_seteventhandler(iv_handler hproc);
@@ -1160,6 +1172,21 @@ void iv_gs4_to_gs(struct iv_img_conv *c);
  */
 void iv_gs_to_gs(struct iv_img_conv *c);
 
+//BT client functionality
+bt_service_obj *bt_service_init_input(int id);
+int bt_service_cancel_input(bt_service_obj *);
+int bt_service_close_input(bt_service_obj *);
+enum bt_service_e bt_service_get_type(bt_service_obj *obj);
+
+//BT OBEX service
+enum obex_status_e obex_get_status(bt_service_obj *);
+char *obex_get_filename(bt_service_obj *);
+char *obex_get_filepath(bt_service_obj *);
+char *obex_get_description(bt_service_obj *);
+char *obex_get_mimetype(bt_service_obj *);
+long obex_get_filesize(bt_service_obj *);
+int obex_set_auth(bt_service_obj *, int auth, char *new_filename, char *new_filepath);
+enum obex_status_e obex_get_transfer(bt_service_obj *,long *transferred, long *total);
 
 #ifdef __cplusplus
 }

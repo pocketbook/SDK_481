@@ -139,6 +139,8 @@ extern "C"
 #define IOC_MCU_SENSOR_PATH IOC_MCU_PATH "sensor"
 #define IOC_MCU_FPROFILE_PATH IOC_MCU_PATH "frontlight_profile"
 #define IOC_MCU_BRIGHTNESS_PATH IOC_MCU_PATH "brightness"
+#define IOC_MCU_POWEROFF_PATH IOC_MCU_PATH "poweroff"
+#define IOC_MCU_RESET_PATH IOC_MCU_PATH "reset"
 
 typedef enum EPARTNER_ID {
     PARTNER_INVALID = -1,
@@ -886,9 +888,38 @@ int hw_hidstatus(void);
 char **hw_enum_btdevices();
 char **hw_enum_wireless();
 int hw_get_btservice(const char *mac, const char *service);
-int hw_net_connect(const char *name, int silent); // silent to suppress screen output
+int hw_net_connect(const char *name, int silent, int showHourGlass); // silent to suppress screen output
 int hw_net_disconnect();
 iv_netinfo *hw_net_info();
+NET_STATE hw_get_current_network_state (void);
+
+int hw_netmgr(int status);
+/*
+ * Returns netmgr pid.
+ */
+int hw_netmgr_status();
+/*
+ * Returns list of currently known networks in old network config format.
+ * @path saving config path.
+ */
+int hw_netlist(const char *path);
+/*
+ * Adds network configured in old network config format.
+ * ssid might be preset in string like \"name\" or hex format
+ * key might be preset in string like \"key\" or wpa_passphrase format
+ */
+int hw_netadd(const char *path);
+int hw_netdel(const char *path);
+int hw_netdel_by_ssid(const char *ssid);
+/*
+ * Selects to connect already known network.
+ */
+int hw_netsel(const char *path);
+/*
+ * Selects to connect already known network.
+ */
+int hw_netsel_by_ssid(const char *ssid);
+
 void hw_uiclear();
 int hw_uiquery();
 void hw_uiresponse(int status, char *data);
@@ -941,6 +972,9 @@ int hw_get_frontlight_state(void);
 void hw_set_frontlight_state(int flstate, int previous);
 unsigned int hw_get_mcu_capabilities(void);
 int hw_is_timed_refresh_enabled(void);
+void hw_mcu_go_standby(void);
+void hw_mcu_reset(void);
+
 
 void iv_extend_wtime(long long t);
 iv_handler iv_seteventhandler(iv_handler hproc);

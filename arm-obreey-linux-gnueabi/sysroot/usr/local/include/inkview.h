@@ -213,6 +213,7 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define MSG_DECRYPT_MEM       0x119
 #define MSG_GETDEVICEID       0x11a
 #define MSG_SETFRONTLIGHT     0x11b
+#define MSG_ACTUALIZEFRONTLIGHT 0x11c
 
 #define MSG_FBINFO            0x201
 #define MSG_ORIENTATION       0x202
@@ -350,7 +351,7 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_NET_FOUND_NEW_FW 260
 
 #define ISKEYEVENT(x) ((x)>=25 && (x)<=28)
-#define ISPOINTEREVENT(x) (((x)>=29 && (x)<=31) || ((x)>=34 && (x)<=35) || (x)==44 || (x)==39)
+#define ISPOINTEREVENT(x) (((x)>=29 && (x)<=31) || ((x)>=34 && (x)<=35) || (x)==44 || (x)==39 || (x)==45)
 #define ISPANELEVENT(x) ((x)>=119 && (x) <= 132)
 
 #undef KEY_UP
@@ -474,12 +475,14 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define KBD_NO_SELFCLOSE_ON_OK      0x80000
 #define KBD_CUSTOM_ENTER_KEY       0x100000
 #define KBD_MARKED_ENTER_KEY       0x200000
+#define KBD_PASSWORD_WIFI          0x400000
 
 
 #define ICON_INFORMATION 1
 #define ICON_QUESTION 2
 #define ICON_WARNING 3
 #define ICON_ERROR 4
+#define ICON_WIFI 5
 
 #define DEF_BUTTON1 0
 #define DEF_BUTTON2 0x1000
@@ -1725,6 +1728,7 @@ void CloseProgressbar();
 void ShowHourglassForce();
 void ShowHourglass();
 void ShowHourglassAt(int x, int y);
+void ShowHourglassForceAt(int x, int y);
 void ShowPureHourglass();
 void ShowPureHourglassForce();
 void HideHourglass();
@@ -1861,6 +1865,7 @@ int GetCurrentTask();
 void GetActiveTask(int *task, int *subtask);
 int IsTaskActive();
 void GetPreviousTask(int *task, int *subtask);
+void GetPreviousTaskInStack(int *task, int *subtask);
 int GetTaskList(int *list, int size);
 taskinfo *GetTaskInfo(int task);
 int FindTaskByBook(const char *name, int *task, int *subtask);
@@ -2239,8 +2244,11 @@ char **EnumWirelessNetworks();
 char **EnumConnections();
 int GetBTservice(const char *mac, const char *service);
 int NetConnect(const char *name);
+int NetConnect2(const char *name, int showHourglass);
 int NetConnectSilent(const char *name);
+int NetConnectAsync(int (*cb)(int status));
 int NetDisconnect();
+int NetDisconnectAsync(int (*cb)(int status));
 iv_netinfo *NetInfo();
 void OpenNetworkInfo();
 char *GetUserAgent();
@@ -2483,6 +2491,47 @@ NET_STATE GetNetState(void);
  */
 int GetLastNetConnectionError(void);
 
+/*
+ * Starts/stops network manager service.
+ * It should be run before using network manager interface
+ * @status: 1-on; 0-off;
+ * Returns NET_OK if service has started/stopped without errors. Other case NET_E* error.
+ */
+int NetMgr(int status);
+/*
+ * Returns netmgr status; May return 0 or -1 if network manager is off.
+ */
+int NetMgrStatus(void);
+/*
+ * Update wifi poweroff timeout. It is used with configurator.
+ */
+int NetMgrPing(void);
+
+/*
+ * Returns list of currently known networks in old network config format.
+ * @path saving config path.
+ */
+int GetNetList(const char *path);
+/*
+ * Adds network configured in old network config format.
+ * ssid might be preset in string like \"name\" or hex format
+ * key might be preset in string like \"key\" or wpa_passphrase format
+ */
+int NetAdd(const char *path);
+/*
+ * Deletes network from known
+ */
+int NetDelete(const char *path);
+int NetDelete_by_ssid(const char *ssid);
+/*
+ * Selects to connect already known network.
+ */
+int NetSelect(const char *path);
+/*
+ * Selects to connect already known network.
+ */
+int NetSelect_by_ssid(const char *ssid);
+
 #define iverror(x...) do { \
 	extern char *program_invocation_name; \
 	fprintf(stderr,"[%i : %s] ",getpid(),program_invocation_name); \
@@ -2522,8 +2571,11 @@ char *arc_filename(const char *name);
 
 const char* get_partner_id(void);
 
+int get_keylock();
+
 #ifdef __cplusplus
 }
+
 #endif
 
 #endif

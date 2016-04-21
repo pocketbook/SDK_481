@@ -77,6 +77,7 @@ extern "C"
 #define STATEPATH USERDATA "/state"
 #define SYSTEMTHEMESPATH SYSTEMDATA "/themes"
 #define USERTHEMESPATH USERDATA "/themes"
+#define CUSTOMRESOURCEPATH USERDATA "/resources"
 #define GLOBALCONFIGFILE CONFIGPATH "/global.cfg"
 #define NETWORKCONFIGFILE CONFIGPATH "/network.cfg"
 #define TSCALDATA CONFIGPATH "/tsc.dat"
@@ -126,6 +127,7 @@ extern "C"
 #define USERFRONTLIGHT USERDATA "/bin/" FRONTLIGHT_APP
 #define SYSTEMSFRONTLIGHT SYSTEMDATA "/bin/" FRONTLIGHT_APP
 #define LASTOPENBOOKS STATEPATH "/lastopen.txt"
+#define CURRENTBOOK_SAVE STATEPATH "/current"
 #define FAVORITES USERDATA "/favorite"
 #define CURRENTBOOK TEMPDIR "/.current"
 #define BOOKSHELFSTATE TEMPDIR"/.bsstate"
@@ -160,8 +162,14 @@ extern "C"
 #define DROPBOX_DIRECTORY CONFIGPATH "/dropbox"
 #define DROPBOX_CONFIG DROPBOX_DIRECTORY "/dropbox.cfg"
 
+#define PBCLOUD_CONFIG_FILE CONFIGPATH "/pbcloud.cfg"
+
 #define DEMO_APP_PATH SYSTEMDATA "/bin/picviewer.app"
 #define DEMO_IMAGES_PATH USERDATA "/demo"
+
+#define CHECKUPDATE_INFO_PATH "/tmp/newsw.info"
+
+#define DEVICE_VARIABLE_CFG SECUREDIR "/device.cfg"
 
 //#define DEFAULTFONT "LiberationSans"
 //#define DEFAULTFONTB "LiberationSans-Bold"
@@ -210,6 +218,9 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define MSG_DECRYPT_MEM       0x119
 #define MSG_GETDEVICEID       0x11a
 #define MSG_SETFRONTLIGHT     0x11b
+#define MSG_ACTUALIZEFRONTLIGHT 0x11c
+#define MSG_UPDATE_SERVICE_STATUSES    0x11d
+#define MSG_FACTORY_RESET	0x11e
 
 #define MSG_FBINFO            0x201
 #define MSG_ORIENTATION       0x202
@@ -238,6 +249,10 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define MSG_TASK_GLOBALREQUEST  0x512
 #define MSG_TASK_SENDEVENTSYNC  0x513
 #define MSG_TASK_INITIALIZED	0x514
+#define MSG_TASK_PREVIOUS_INSTACK   0x515
+#define MSG_TASK_COPY_ACTIVE_FB	0x516
+
+#define MSG_START_SERVICES	0x600
 
 #define MSG_DEVICEKEY         0xad0be01
 #define MSG_RESETKEY          0xad0be02
@@ -245,7 +260,6 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_INIT 21
 #define EVT_EXIT 22
 #define EVT_SHOW 23
-#define EVT_REPAINT 23
 #define EVT_HIDE 24
 #define EVT_KEYDOWN 25
 #define EVT_KEYPRESS 25
@@ -260,6 +274,7 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_POINTERLONG 34
 #define EVT_POINTERHOLD 35
 #define EVT_POINTERDRAG 44 //like EVT_POINTERMOVE, but has non sensitive zone, which smooths finger touch bounce.
+#define EVT_POINTERCANCEL 45
 
 #define EVT_ORIENTATION 32
 #define EVT_FOCUS 36
@@ -270,6 +285,7 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_TOUCHUP   40
 #define EVT_TOUCHDOWN 41
 #define EVT_TOUCHMOVE 42
+#define EVT_REPAINT 43
 
 #define EVT_QN_MOVE    51
 #define EVT_QN_RELEASE 52
@@ -285,6 +301,8 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_PREVPAGE 91
 #define EVT_NEXTPAGE 92
 #define EVT_OPENDIC  93
+#define EVT_CONTROL_PANEL_ABOUT_TO_OPEN  94
+
 
 #define EVT_PANEL_BLUETOOTH_A2DP 118
 
@@ -333,10 +351,17 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define EVT_STOPSCAN     214
 #define EVT_STARTSCAN    215
 #define EVT_SCANSTOPPED  216
+#define EVT_POSTPONE_TIMED_POWEROFF  217
+#define EVT_FRAME_ACTIVATED 218
+#define EVT_FRAME_DEACTIVATED 219
+#define EVT_READ_PROGRESS_CHANGED 220
 
+#define EVT_NET_CONNECTED	256
+#define EVT_NET_DISCONNECTED 257
+#define EVT_NET_FOUND_NEW_FW 260
 
 #define ISKEYEVENT(x) ((x)>=25 && (x)<=28)
-#define ISPOINTEREVENT(x) (((x)>=29 && (x)<=31) || ((x)>=34 && (x)<=35) || (x)==44)
+#define ISPOINTEREVENT(x) (((x)>=29 && (x)<=31) || ((x)>=34 && (x)<=35) || (x)==44 || (x)==39 || (x)==45)
 #define ISPANELEVENT(x) ((x)>=119 && (x) <= 132)
 
 #undef KEY_UP
@@ -459,11 +484,15 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define KBD_NOUPDATE_AFTER_OPEN     0x40000
 #define KBD_NO_SELFCLOSE_ON_OK      0x80000
 #define KBD_CUSTOM_ENTER_KEY       0x100000
+#define KBD_MARKED_ENTER_KEY       0x200000
+#define KBD_PASSWORD_WIFI          0x400000
+
 
 #define ICON_INFORMATION 1
 #define ICON_QUESTION 2
 #define ICON_WARNING 3
 #define ICON_ERROR 4
+#define ICON_WIFI 5
 
 #define DEF_BUTTON1 0
 #define DEF_BUTTON2 0x1000
@@ -585,6 +614,7 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define REQ_OPENBOOK2	88
 #define REQ_FRONTLIGHT	89
 #define REQ_KEYUNLOCK	90
+#define REQ_HOURGLASS	91
 
 #define ALIGN_LEFT 1
 #define ALIGN_CENTER 2
@@ -602,13 +632,14 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define TILE 8192
 #define TO_UPPER 16384
 
-#define FR_CLOSE             1
-#define FR_MOVEUP            2
-#define FR_MOVEDOWN          4
-#define FR_NOMARGIN 0x08000000
-#define FR_OVERLAP  0x10000000
-#define FR_HEADER   0x20000000
-#define FR_UPDATE   0x40000000
+#define FR_CLOSE               1
+#define FR_MOVEUP              2
+#define FR_MOVEDOWN            4
+#define FR_DICTIONARY 0x04000000
+#define FR_NOMARGIN   0x08000000
+#define FR_OVERLAP    0x10000000
+#define FR_HEADER     0x20000000
+#define FR_UPDATE     0x40000000
 
 #define FR_INFO     0x00010000
 #define FR_WARNING  0x00020000
@@ -744,6 +775,13 @@ typedef enum {
 	WPAPSK,
 } WIFI_SECURITY;
 
+typedef enum {
+	NET_STATE_UNKNOWN = -1,
+	DISCONNECTED = 0,
+	CONNECTING,
+	CONNECTED,
+} NET_STATE;
+
 #define GSENSOR_OFF 0
 #define GSENSOR_ON 1
 #define GSENSOR_INTR 2
@@ -767,7 +805,7 @@ typedef enum {
  * TOUCHDRAGDEADZONE = R^2, R - radius of non sensitive touch zone relatively EVT_POINTERDOWN,
  * if dX^2+dY^2 by EVT_POINTERMOVE > TOUCHDRAGDEADZONE, than generate EVT_POINTERDRAG
  */
-#define TOUCHDRAGDEADZONE (HWC_LNI633 ? 324 : HWC_EP7A ? 330 : 200) // = R^2
+#define TOUCHDRAGDEADZONE (HWC_LNI633 ? 324 : (HWC_EP7A ? 330 : (HWC_DISPLAY_8INCH_1200 ? 900 : (HWC_DISPLAY_6INCH_758 ? 330 : 200)))) // = R^2
 
 // DEFAULT FONTS
 typedef enum
@@ -927,6 +965,29 @@ typedef struct ifont_s {
 
 } ifont;
 
+typedef enum {
+    FM_SHOW_SIZE = 0x00001,
+} FONT_MENU_FLAGS;
+
+typedef struct iuser_font_s {
+    char *show_font_name;
+    char *real_font_name;
+    ifont *font;
+} iuser_font;
+
+typedef struct ifont_list_s {
+    iuser_font *list;
+    int count;
+} ifont_list;
+
+typedef struct ifont_menu_s {
+    char *menu_title;
+    char *current_font;
+    FONT_MENU_FLAGS flags;
+    iv_fontselecthandler hproc;
+    ifont_list *user_fonts;
+} ifont_menu;
+
 typedef struct imenu_s {
 
     short type;
@@ -996,6 +1057,7 @@ typedef struct icontext_menu_properties_s {
     int background_style;
 }icontext_menu_properties;
 
+// Old functional, use ifont_menu struct
 typedef struct ifont_selector_properties {
     unsigned short custom_font_enable;
 } font_selector_properties;
@@ -1066,8 +1128,8 @@ typedef struct ipager_s {
     int page_width;
     int rigth_width;
     int separator_size;
-    ibitmap *icon_left;
-    ibitmap *icon_right;
+    const ibitmap *icon_left;
+    const ibitmap *icon_right;
     int current_page;
     int total_pages;
     irect position;
@@ -1180,6 +1242,9 @@ typedef struct bookinfo_s {
 	char* first_author;
 	int drm;
 	char *annotation;
+    char *lang;
+    char *publisher;
+    char *identifiers;
 
 } bookinfo;
 
@@ -1310,15 +1375,24 @@ typedef struct taskinfo_s {
 
 } taskinfo;
 
+//input_dev_e is touch 'devtype'; describes a input device.
+enum input_dev_e {
+	UNKNOWN = 0,
+	CAPTOUCH,
+	DIGITIZER,
+
+	MAX_INPUT_DEV,
+};
+
 typedef struct iv_mtinfo_s {
 
     int active;
     int x;
     int y;
     int pressure;
-    int rsv_1;
+    enum input_dev_e devtype;
     int rsv_2;
-
+    long long timems;
 } iv_mtinfo;
 
 //scaned wifi ap information
@@ -1350,6 +1424,58 @@ typedef struct network_interface_array_s {
 	unsigned int count;
 	network_interface net_int[];
 }network_interface_array;
+
+/*
+ * Bluetooth services
+ */
+#define MAX_BT_SERVICE_USER 16
+
+enum bt_service_e {
+	BT_UNKNOWN = 0,
+	BT_AUTH,
+	BT_OBEX,
+	BT_SECOND_SCREEN
+};
+
+enum bt_service_state_e {
+	BT_SERVICE_ACTIVE = 0,
+	BT_SERVICE_CANCEL,
+	BT_SERVICE_ERROR
+};
+
+enum obex_status_e {
+	OBEX_UNKNOWN = 0,
+	OBEX_ERROR,
+	OBEX_REQUEST_AUTH,
+	OBEX_REQUEST_AUTH_DONE,
+	OBEX_TRANSFERRING,
+	OBEX_DONE
+};
+
+struct obex_service_s {
+	enum obex_status_e status;
+	int auth;
+
+	long filesize;
+	long transferred;
+
+	char name[128];
+	char path[256];
+	char description[128];
+	char mimetype[64];
+};
+
+typedef struct bt_service_obj_s {
+	int id;
+	enum bt_service_e service;
+	enum bt_service_state_e state;
+	int lock;
+	pid_t users[MAX_BT_SERVICE_USER];
+	union {
+		struct obex_service_s obex;
+		char service_data[1024];
+	};
+} bt_service_obj;
 
 /*
  * struct which consist main information about any network interface.
@@ -1385,6 +1511,7 @@ void OpenScreen();
 void OpenScreenExt();
 void InkViewMain(iv_handler h);
 void CloseApp();
+void InitInkview(int reg_flags);
 
 // Return irect struct
 
@@ -1447,6 +1574,7 @@ void DrawPickOut(int x, int y, int w, int h, const char *key);
 void DrawPickOutEx(const irect *rect, const char *key);
 void DitherArea(int x, int y, int w, int h, int levels, int method);
 void DitherAreaQuick2Level(int dx, int dy, int dw, int dh);
+void QuickFloyd16Dither(unsigned char * buffer, int row_size, int left, int top, int width, int height);
 void Stretch(const unsigned char *src, int format, int sw, int sh, int scanline, int dx, int dy, int dw, int dh, int rotate);
 void StretchArea(const unsigned char *src, int format, int sx, int sy, int sw, int sh, int scanline, int dx, int dy, int dw, int dh, int rotate);
 void StretchAreaBW(const unsigned char *src, int format, int sx, int sy, int sw, int sh, int scanline, int dx, int dy, int dw, int dh);
@@ -1477,7 +1605,8 @@ void TransparentRect(irect rect, int percent);
 // Bitmap functions
 
 ibitmap *LoadBitmap(const char *filename);
-int SaveBitmap(const char *filename, ibitmap *bm);
+ibitmap *zLoadBitmap(void *zf, const char *filename);
+int SaveBitmap(const char *filename, const ibitmap *bm);
 ibitmap *BitmapFromScreen(int x, int y, int w, int h);
 ibitmap *BitmapFromScreenR(int x, int y, int w, int h, int rotate);
 ibitmap *NewBitmap(int w, int h);
@@ -1489,7 +1618,8 @@ ibitmap *LoadPNG(const char *path, int dither);
 ibitmap *LoadPNGStretch(const char *path, int width, int height, int proportional, int dither);
 int SavePNG(const char *path, const ibitmap *bmp);
 void SetTransparentColor(ibitmap **bmp, int color);
-ibitmap* CopyBitmapDepth4To8(ibitmap* bmp);
+ibitmap* CopyBitmapDepth4To8(const ibitmap* bmp);
+ibitmap* CopyBitmapDepth8To4(const ibitmap* bmp);
 void MoveBitmap(ibitmap* bmp, int offset);
 
 /**
@@ -1516,14 +1646,15 @@ char **EnumFonts();
 char **EnumFontsFromDirectory(const char *directory1, const char *directory2);
 ifont *OpenFont(const char *name, int size, int aa);
 void CloseFont(ifont *f);
-void SetFont(ifont *font, int color);
-ifont *GetFont();
+void SetFont(const ifont *font, int color);
+const ifont *GetFont();
 void DrawString(int x, int y, const char *s);
 void DrawStringR(int x, int y, const char *s);
 int TextRectHeight(int width, const char *s, int flags);
+int TextRectHeightEx(int width, int height, const char *s, int flags);
 int MinimalTextRectWidth(int w, const char *s);
 char *DrawTextRect(int x, int y, int w, int h, const char *s, int flags);
-char *DrawTextRect2(irect *rect, const char *s);
+char *DrawTextRect2(const irect *rect, const char *s);
 char *DrawTextRect3(int x, int y, int w, int h, const char *s, int flags, int * height);
 int CharWidth(unsigned  short c);
 int StringWidthExt(const char *s, int l);
@@ -1543,6 +1674,7 @@ void PartialUpdate(int x, int y, int w, int h);
 void PartialUpdateBlack(int x, int y, int w, int h);
 void PartialUpdateBW(int x, int y, int w, int h);
 void PartialUpdateHQ(int x, int y, int w, int h);
+void PartialUpdateDU4(int x, int y, int w, int h);
 void DynamicUpdate(int x, int y, int w, int h);
 void DynamicUpdateBW(int x, int y, int w, int h);
 
@@ -1601,6 +1733,11 @@ int GetListHeaderLevel();
 void OpenDummyList(const char *title, const ibitmap *background, char *text, iv_listhandler hproc);
 char **EnumKeyboards();
 void LoadKeyboard(const char *kbdlang);
+/**
+ * @brief GetKeyboardFlags is thread safe in device environment
+ * @return flags with wich keyboard was opened
+ */
+int GetKeyboardFlags();
 void OpenKeyboard(const char *title, char *buffer, int maxlen, int flags, iv_keyboardhandler hproc);
 void OpenCustomKeyboard(const char *filename, const char *title, char *buffer, int maxlen, int flags, iv_keyboardhandler hproc);
 void CloseKeyboard();
@@ -1610,6 +1747,13 @@ void OpenPageSelector(iv_pageselecthandler hproc);
 void OpenTimeEdit(const char *title, int x, int y, long intime, iv_timeedithandler hproc);
 void OpenDirectorySelector(const char *title, char *buf, int len, iv_dirselecthandler hproc);
 void OpenFontSelector(const char *title, const char *font, int with_size, iv_fontselecthandler hproc);
+void OpenFontSelectorEx(const ifont_menu *menu);
+ifont_menu GetFontMenuStruct();
+void ClearFontMenuStruct(ifont_menu *menu);
+void ClearFontListStruct(ifont_list *list);
+// Temporary function for tunneling font menu properties thru configeditor
+void SetFontMenuStruct(ifont_menu * menu);
+
 void OpenBookmarks(int page, long long position, int *bmklist, long long *poslist,
         int *bmkcount, int maxbmks, iv_bmkhandler hproc);
 void SwitchBookmark(int page, long long position, int *bmklist, long long *poslist,
@@ -1627,6 +1771,7 @@ void CloseProgressbar();
 void ShowHourglassForce();
 void ShowHourglass();
 void ShowHourglassAt(int x, int y);
+void ShowHourglassForceAt(int x, int y);
 void ShowPureHourglass();
 void ShowPureHourglassForce();
 void HideHourglass();
@@ -1653,6 +1798,9 @@ int GetPanelType();
 void SetShowPanelReader(int show);
 int IsShowPanelReader();
 int  SetPanelSeparatorEnabled(int enable); // Calling procedure you enable horizontal separator, it separates bottom panel from other page contents
+int IsPanelSeparatorEnabled();
+void InitPanel();
+void SetPanelKeyForFullScreenEnabled(const char *key);
 
 /**
  * @brief StartPanelProgress start gui animation on panel
@@ -1728,6 +1876,7 @@ void UpdateCurrentConfigPage();
 void UpdateConfigPage(const char *title, iconfigedit *ice);
 void CloseConfigLevel();
 void NotifyConfigChanged();
+void ClearConfig(iconfig *cfg);
 /**
  * @brief GetKeyMapping used to read TEXT key mapping from default config
  * @param act0 and @param act1 are are arrays of CSTtring wich look like "@KA_..." 
@@ -1735,7 +1884,7 @@ void NotifyConfigChanged();
  * act1[KEY_PREV] will contain an action wich should happen when user HOLS KEY_PREV,
  * IMPORTANT !! pointers are not always valid, use strdup to handle it
  */
-void GetKeyMapping(char *act0[], char *act1[]);
+void GetKeyMapping(const char *act0[], const char *act1[]);
 /**
  * @brief GetKeyMappingEx is similar to GetKeyMapping
  * @param what may be KEYMAPPING_GLOBAL or KEYMAPPING_TXT or KEYMAPPING_PDF
@@ -1744,7 +1893,7 @@ void GetKeyMapping(char *act0[], char *act1[]);
  * @param count contains key count, it is the size of act0 and act1 maximal size
  * IMPORTANT !! pointers are not always valid, use strdup to handle it
  */ 
-void GetKeyMappingEx(int what, char *act0[], char *act1[], int count);
+void GetKeyMappingEx(int what, const char *act0[], const char *act1[], int count);
 int AdjustDirectionKeys(int key);
 unsigned long QueryDeviceButtons();
 int IsJoystickButtonsPresent();
@@ -1754,7 +1903,7 @@ int IsJoystickButtonsPresent();
 #define TCAP(s) (0x50000000 | ((s[0] & 0x7f) | ((s[1] & 0x7f) << 7) | ((s[2] & 0x7f) << 14) | ((s[3] & 0x7f) << 21)))
 
 int MultitaskingSupported();
-int NewTask(char *path, char *args[], char *appname, char *name, ibitmap *icon, unsigned int flags);
+int NewTask(const char *path, char * const args[], const char *appname, const char *name, const ibitmap *icon, unsigned int flags);
 int NewSubtask(char *name);
 int SwitchSubtask(int subtask);
 void SubtaskFinished(int subtask);
@@ -1762,12 +1911,13 @@ int GetCurrentTask();
 void GetActiveTask(int *task, int *subtask);
 int IsTaskActive();
 void GetPreviousTask(int *task, int *subtask);
+void GetPreviousTaskInStack(int *task, int *subtask);
 int GetTaskList(int *list, int size);
 taskinfo *GetTaskInfo(int task);
 int FindTaskByBook(const char *name, int *task, int *subtask);
 int FindTaskByAppName(const char *name);
 int SetTaskParameters(int task, const char *appname, const char *name, ibitmap *icon, unsigned int flags);
-int SetSubtaskInfo(int task, int subtask, char *name, char *book);
+int SetSubtaskInfo(int task, int subtask, const char *name, const char *book);
 int SetActiveTask(int task, int subtask);
 void GoToBackground();
 int CloseTask(int task, int subtask, int force);
@@ -1785,6 +1935,14 @@ iv_fbinfo *GetTaskFramebufferInfo (int task);
 void ReleaseTaskFramebuffer(icanvas *fb);
 void iv_wait_task_activation(int timeout);
 
+/*
+ * Copy framebuffer from currently active task (mpc->activetask)
+ * to framebuffer of task has called this function.
+ * It might be used in hidden or background tasks,
+ * when need send Dialog or Message to user on background of currently active task.
+ */
+void CopyActiveFb(void);
+
 /* Auto control for frontlight brigthness */
 int hw_is_frontlight_auto_supported(void);
 void hw_set_frontlight_auto_enabled(int enable);
@@ -1796,14 +1954,14 @@ int hw_get_lux_raw(void);
 ihash * hash_new(int prime);
 void hash_add(ihash *h, const char *name, const char *value);
 void hash_delete(ihash *h, const char *name);
-char *hash_find(ihash *h, const char *name);
+const char *hash_find(ihash *h, const char *name);
 
 // Object hash functions
 
 ihash * vhash_new(int prime, iv_hashaddproc addproc, iv_hashdelproc delproc);
 void vhash_add(ihash *h, const char *name, const void *value);
 void vhash_delete(ihash *h, const char *name);
-void *vhash_find(ihash *h, const char *name);
+const void *vhash_find(ihash *h, const char *name);
 
 // Common hash functions
 
@@ -1856,9 +2014,9 @@ char ** EnumLanguages();
 void LoadLanguage(const char *lang);
 void AddTranslation(const char *label, const char *trans);
 // return translation for current language, do translate on english
-char *GetCurrentLangText(const char *s);
-char *GetLangText(const char *s);
-char *GetLangTextF(const char *s, ...);
+const char *GetCurrentLangText(const char *s);
+const char *GetLangText(const char *s);
+const char *GetLangTextF(const char *s, ...);
 void SetRTLBook(int rtl);
 int IsRTL();  // depends only on the system language
 int IsBookRTL();	// can be overwritten by application
@@ -1867,18 +2025,50 @@ int IsBookRTL();	// can be overwritten by application
 //#define TF(x...) GetLangTextF(x)
 
 // User profile functions
+typedef struct iprofile_s {
+	char *name;
+	char *path;
+	int type;
+	ibitmap *avatar;
+} iprofile;
 
+typedef struct iprofiles_s {
+	iprofile *profile;
+	int count;
+} iprofiles;
+
+// Profiles functions
+
+// Old functions. Will be removed in future
 char **EnumProfiles();
 int GetProfileType(const char *name);
 ibitmap **EnumProfileAvatars();
 ibitmap *GetProfileAvatar(const char *name);
 int SetProfileAvatar(const char *name, ibitmap *ava);
-int CreateProfile(const char *name, int type);
 int RenameProfile(const char *oldname, const char *newname);
 int DeleteProfile(const char *name);
 char *GetCurrentProfile();
 void SetCurrentProfile(const char *name, int flags);
+int GetProfilesCountAfterEnum();
 void OpenProfileSelector();
+int ScanProfiles(const char *path, int type, iprofiles *profiles);
+int GetLocalProfilesLimit();
+int GetSDProfilesLimit();
+int GetProfilesLimit();
+
+// New function for work with profiles
+iprofile CreateProfileStruct();
+iprofiles CreateProfilesStruct();
+void ClearProfilesStruct(iprofiles *profiles);
+void ClearProfileStruct(iprofile *profile);
+int ScanProfiles(const char *path, int type, iprofiles *profiles);
+int GetProfilesList(iprofiles *profiles);
+int CreateProfile(const char *name, int type);
+int DeleteProfileEx(const iprofile *profile);
+int RenameProfileEx(const iprofile *profile, const char *new_name);
+int GetCurrentProfileEx(iprofile *profile);
+int SetCurrentProfileEx(const iprofile *profile);
+int GetProfilesCount();
 
 // Theme functions
 
@@ -1899,12 +2089,26 @@ bookinfo *GetBookInfo(const char *name);
 bookinfo *GetBookInfoExt(const char *path, const char *separator);
 char *GetBookISBN(const char *path);
 ibitmap *GetBookCover(const char *name, int width, int height);
+
+typedef enum MencaFileStatus_e {
+    kMencaNoStatus,
+    kMencaInCloud,
+    kMencaSyncing,
+    kMencaDownloaded
+} MencaFileStatus;
+
+typedef struct BookSyncStatus_s{
+    MencaFileStatus menca_status_;
+} BookSyncStatus;
+
+BookSyncStatus GetBookSyncStatus(const char *path);
+
 char *GetAssociatedFile(const char *name, int index);
 char *CheckAssociatedFile(const char *name, int index);
 iv_filetype *FileType(const char *path);
 iv_filetype *FileTypeExt(const char *path, struct stat *f_stat);
 void SetFileHandler(const char *path, const char *handler);
-char *GetFileHandler(const char *path);
+const char *GetFileHandler(const char *path);
 void PackParameters(int argc, const char * const * argv, void ** data, int * len);
 void UnpackParameters(void * data, int len, int * argc, char *** argv);
 int OpenBook(const char *path, const char *parameters, int flags);
@@ -2043,6 +2247,7 @@ int PageSnapshot();
 int RestoreStartupLogo();
 int QueryTouchpanel();
 void CalibrateTouchpanel();
+void CalibrateTouchDevice(enum input_dev_e TouchDevice);
 void OpenCalendar();
 int StartSoftwareUpdate();
 int HavePowerForSoftwareUpdate();
@@ -2099,8 +2304,11 @@ char **EnumWirelessNetworks();
 char **EnumConnections();
 int GetBTservice(const char *mac, const char *service);
 int NetConnect(const char *name);
+int NetConnect2(const char *name, int showHourglass);
 int NetConnectSilent(const char *name);
+int NetConnectAsync(int (*cb)(int status));
 int NetDisconnect();
+int NetDisconnectAsync(int (*cb)(int status));
 iv_netinfo *NetInfo();
 void OpenNetworkInfo();
 char *GetUserAgent();
@@ -2118,16 +2326,17 @@ int DownloadTo(int id, const char *url, const char *postdata, const char *filena
 int DownloadTo_Crutch(int id, const char *url, const char *postdata, const char *filename, int timeout); // Don't use this function, it will be deleted
 int SetSessionFlag(int _id, int _flag, void *_value);
 int GetSessionStatus(int id);
-char * GetHeader(int id, const char *name);
+const char * GetHeader(int id, const char *name);
 iv_sessioninfo *GetSessionInfo(int id);
 void PauseTransfer(int id);
 void ResumeTransfer(int id);
 void AbortTransfer(int id);
-char *NetError(int e);
+const char *NetError(int e);
 void NetErrorMessage(int e);
 int GetA2dpStatus();
 void SetPort(int port);
 iv_mtinfo *GetTouchInfo();
+iv_mtinfo *GetTouchInfoI(unsigned int index);
 int QueryHeadphone();
 char * wpa_passphrase(char * ssid, char * passphrase);
 
@@ -2144,11 +2353,34 @@ int convert_to_utf(const char *src, char *dest, int destsize, const char *enc);
 int utf2ucs(const char *s, unsigned short *us, int maxlen);
 int utf2ucs4(const char *s, unsigned int *us, int maxlen);
 int ucs2utf(const unsigned short *us, char *s, int maxlen);
-int utfcasecmp(const char *sa, const char *sb);
-int utfncasecmp(const char *sa, const char *sb, int n);
-char *utfcasestr(const char *sa, const char *sb);
-void utf_toupper(char *s);
-void utf_tolower(char *s);
+int utf_toupper_ext(char* src, int src_len, char** dest, int* dest_len);
+int utf_tolower_ext(char* src, int src_len, char** dest, int* dest_len);
+
+#define CHANGE_CASE_ON_STACK(buf, f) { \
+    char* CHANGE_CASE_ON_STACK_dest_ = NULL; \
+    int CHANGE_CASE_ON_STACK_dest_len_ = 0; \
+    f((buf), -1, &CHANGE_CASE_ON_STACK_dest_, &CHANGE_CASE_ON_STACK_dest_len_); \
+    strncpy((buf), CHANGE_CASE_ON_STACK_dest_, sizeof(buf) - 1); \
+    (buf)[sizeof(buf) - 1]  = 0; \
+    free(CHANGE_CASE_ON_STACK_dest_); \
+}
+
+#define UTF_TO_UPPER_ON_STACK(buf) CHANGE_CASE_ON_STACK(buf, utf_toupper_ext)
+#define UTF_TO_LOWER_ON_STACK(buf) CHANGE_CASE_ON_STACK(buf, utf_tolower_ext)
+
+#define CHANGE_CASE_ON_HEAP(buf, f) { \
+    char* CHANGE_CASE_ON_HEAP_dest_ = NULL; \
+    int CHANGE_CASE_ON_HEAP_dest_len_ = 0; \
+    int res = f((buf), -1, &CHANGE_CASE_ON_HEAP_dest_, &CHANGE_CASE_ON_HEAP_dest_len_); \
+    if (res >= 0) { \
+        free(buf); \
+        (buf) = CHANGE_CASE_ON_HEAP_dest_; \
+    } \
+}
+
+#define UTF_TO_UPPER_ON_HEAP(buf) CHANGE_CASE_ON_HEAP(buf, utf_toupper_ext)
+#define UTF_TO_LOWER_ON_HEAP(buf) CHANGE_CASE_ON_HEAP(buf, utf_tolower_ext)
+
 void md5sum(const unsigned char *data, int len, unsigned char *digest);
 int base64_encode(const unsigned char *in, int len, char *out);
 int base64_decode(const char *in, unsigned char *out, int len);
@@ -2159,9 +2391,10 @@ int move_file_with_af(const char *src, const char *dst);
 int unlink_file_with_af(const char *name);
 int recurse_action(const char *path, iv_recurser proc, void *data, int creative, int this_too);
 void LeaveInkViewMain();
-int IsInRect(int x, int y, irect * rect);
+int IsInRect(int x, int y, const irect * rect);
 void MD5PartFile(const char *src, unsigned char *r);
 unsigned int crc32hash(const char *buf, unsigned int len);
+int FastBookHash(const char* filename, char * result, int result_size);
 // dialog show on the screen
 
 int GetDialogShow(); // 1 - dialog showing, 0 - dialog hidden.
@@ -2308,6 +2541,58 @@ network_interface_array *GetNetDNS (void);
  */
 int GetNetSignalQuality (void);
 
+/*
+ * Returns current connection state
+ */
+NET_STATE GetNetState(void);
+
+/*
+ * Returns last connection error which are described NET_E* defines.
+ * If connection is established that returns NET_OK.
+ */
+int GetLastNetConnectionError(void);
+
+/*
+ * Starts/stops network manager service.
+ * It should be run before using network manager interface
+ * @status: 1-on; 0-off;
+ * Returns NET_OK if service has started/stopped without errors. Other case NET_E* error.
+ */
+int NetMgr(int status);
+/*
+ * Returns netmgr status; May return 0 or -1 if network manager is off.
+ */
+int NetMgrStatus(void);
+/*
+ * Update wifi poweroff timeout. It is used with configurator.
+ */
+int NetMgrPing(void);
+
+/*
+ * Returns list of currently known networks in old network config format.
+ * @path saving config path.
+ */
+int GetNetList(const char *path);
+/*
+ * Adds network configured in old network config format.
+ * ssid might be preset in string like \"name\" or hex format
+ * key might be preset in string like \"key\" or wpa_passphrase format
+ */
+int NetAdd(const char *path);
+/*
+ * Deletes network from known
+ */
+int NetDelete(const char *path);
+int NetDelete_by_ssid(const char *ssid);
+/*
+ * Selects to connect already known network.
+ */
+int NetSelect(const char *path);
+/*
+ * Selects to connect already known network.
+ */
+int NetSelect_by_ssid(const char *ssid);
+
 #define iverror(x...) do { \
 	extern char *program_invocation_name; \
 	fprintf(stderr,"[%i : %s] ",getpid(),program_invocation_name); \
@@ -2338,10 +2623,23 @@ int CoverCachePut(COVERCACHE_STORAGES storage, const char *file_path, ibitmap *b
  */
 ibitmap *CoverCacheGet(COVERCACHE_STORAGES storage, const char *file_path);
 
+/*
+ * Postpone timed poweroff to let device long-running background tasks
+ */
+int PostponeTimedPoweroff(void);
+
 char *arc_filename(const char *name);
 
+const char* get_partner_id(void);
+
+int get_keylock();
+
+int is_enough_free_space();
+
+const char* get_file_extension(const char* filename);
 #ifdef __cplusplus
 }
+
 #endif
 
 #endif

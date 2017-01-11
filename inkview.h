@@ -223,8 +223,6 @@ extern const char * OBREEY_SOCIAL_COOKIES_PATH;
 #define MSG_FACTORY_RESET	0x11e
 #define MSG_SETTIME_FROM_NTP 0x11f
 #define MSG_GET_IS_TIME_MONOTONIC_AFTER_LAST_NTP_SYNC 0x120
-#define MSG_GET_PARTNER_ID 0x121
-#define MSG_UPDATE_PARTNER_ID 0x122
 
 #define MSG_FBINFO            0x201
 #define MSG_ORIENTATION       0x202
@@ -2027,7 +2025,6 @@ void Path2String(const char * path, char * string, int maxLength);
 long iv_ipc_request(long type, long attr, unsigned char *data, int inlen, int outlen);
 long iv_ipc_request_secure(long type, long param, unsigned char *data, int inlen, int outlen);
 long iv_ipc_cmd(long type, long param);
-long iv_ipc_request_with_timeout(long type, long param, unsigned char *data, int inlen, int outlen, int timeout_ms);
 
 // Language functions
 

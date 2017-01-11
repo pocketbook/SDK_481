@@ -165,8 +165,7 @@ typedef enum EPARTNER_ID {
     PARTNER_KNV,
     PARTNER_NORLI,
     PARTNER_BUCHMEDIA,
-    PARTNER_LEGIMI,
-    PARTNER_BUCHZENTRUM
+    PARTNER_LEGIMI
 } PARTNER_ID;
 
 //#define DEEPSLEEPTIME 600000LL
@@ -566,8 +565,8 @@ typedef struct iv_mpctl_s {
     long long obex_transferred;
     long long obex_size;
     int menca_status;
-    int partner_change_counter;
-    pid_t netscript_start_pid;
+	pid_t netscript_start_pid;
+	int fl_version;
 } iv_mpctl;
 
 typedef struct eink_cmd_s {
